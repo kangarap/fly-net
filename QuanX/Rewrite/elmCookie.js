@@ -16,7 +16,8 @@ const $ = new API('elm', true);
             // cookie 字符串
             let str = ckItems.join(' ');
             $.write(str, "elmCookie")
-            $.notify(`写入cookie：${str}`)
+            $.log(`写入cookie：${str}`)
+            $.notify('elmCookie', ``, `写入cookie：${str}`)
         } else {
             throw new Error("写入Cookie失败, 关键值缺失\n可能原因: 非网页获取 ‼️");
         }
