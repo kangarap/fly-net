@@ -26,6 +26,9 @@ const $ = new API('elm', true);
     } else if (!req.headers) {
         throw new Error("写入Cookie失败, 请检查匹配URL或配置内脚本类型 ⚠️");
     }
+})().catch((err) => {
+    $.notify("饿了么获取cookie", "❌ 解析数据出现错误", err.message);
+
 })
 
 
