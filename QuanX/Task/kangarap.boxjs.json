@@ -8,12 +8,14 @@
       "id": "ql",
       "name": "青龙同步",
       "keys": [
+        "@ql.ip",
+        "@ql.client_id",
+        "@ql.client_secret",
+        "@ql.username",
+        "@ql.password",
+        "@ql.env",
         "@ql.mute",
-        "magic_qlclient",
-        "magic_qlsecrt",
-        "magic_qlname",
-        "magic_qlpwd",
-        "magic_qltoken"
+        "@ql.is_pwd"
       ],
       "descs_html": [
         "青龙 docker 的安装方式请移步 tg 频道",
