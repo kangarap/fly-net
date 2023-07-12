@@ -9,6 +9,8 @@ const $ = new API('elm', true);
 
 !(async () => {
     const req = $request;
+    console.log(`执行log`)
+    $.log(`执行$.log ${req.headers['Cookie']}`)
     if (req.method != 'OPTIONS' && req.headers) {
         const CV = (req.headers['Cookie'] || req.headers['cookie'] || '');
         const ckItems = CV.match(/(SID|cookie2)=.+?;/g);
