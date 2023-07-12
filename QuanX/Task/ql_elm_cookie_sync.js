@@ -6,10 +6,11 @@ const $ = new API('elm', true);
 
 const title = '😋 饿了么通知提示';
 
-const elmCookie = JSON.parse($.read('elmCookie') || '');
+const elmCookie = $.read('elmCookie') || '';
 
 let remark = "由boxjs同步";
 
+$.log(`获取到cookie ${elmCookie}`)
 
 // 获取远程脚本
 async function getScriptUrl() {
