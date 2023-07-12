@@ -30,7 +30,7 @@ function getUsername(ck) {
 // 获取远程脚本
 async function getScriptUrl() {
     const response = await $.http.get({
-        url: 'https://raw.githubusercontent.com/dompling/Script/master/jd/ql_api.js',
+        url: 'https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_api.js',
     });
     return response.body;
 }
@@ -46,7 +46,7 @@ async function getScriptUrl() {
     await $.ql.delete(ids);
     const wskeyRes = await $.ql.select('JD_WSCK');
     await $.ql.delete(wskeyRes.data.map((item) => item.id));
-    $.log('清空 cookie 和 wskey');
+    $.log('清空 JD_COOKIE. JD_WSCK');
 
     const addData = [];
     const wsCookie = [];
@@ -104,7 +104,7 @@ async function getScriptUrl() {
 
     const cookieText = jd_cookies.map((item) => item.userName).join(`\n`);
     if ($.read('mute') !== 'true') {
-        return $.notify(title, '', `已同步账号： ${cookieText}`);
+        return $.notify(title, '', `🐉 已同步账号： ${cookieText}`);
     }
 })()
     .catch((e) => {
