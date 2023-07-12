@@ -33,7 +33,7 @@ async function getScriptUrl() {
     $.log('清空 elmCookie.');
 
     const addData = [
-        { name: 'elmCookie', value: elmCookie, remark : remark }
+        { name: 'elmCookie', value: elmCookie, remarks : remark }
     ];
 
     // 请求青龙服务 添加环境变量
