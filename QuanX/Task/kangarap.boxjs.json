@@ -84,20 +84,28 @@
       ],
       "scripts": [
         {
-          "name": "青龙同步到BoxJS(京东 Ck)",
-          "script": ""
+          "name": "青龙同步到BoxJS【京东CK】",
+          "script": "https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_jd_cookie_to_box.js"
         },
         {
-          "name": "BoxJS同步到青龙(京东 Ck)",
+          "name": "BoxJS同步到青龙【京东CK】",
           "script": "https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_jd_cookie_sync.js"
         },
         {
-          "name": "备份环境变量",
+          "name": "BoxJS同步到青龙【饿了么CK】(待实现)",
           "script": ""
         },
         {
-          "name": "恢复备份环境变量",
+          "name": "BoxJS同步到青龙【美团CK】(待实现)",
           "script": ""
+        },
+        {
+          "name": "备份环境变量",
+          "script": "https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_env_back.js"
+        },
+        {
+          "name": "恢复备份环境变量",
+          "script": "https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_env_recovery.js"
         }
       ]
     }

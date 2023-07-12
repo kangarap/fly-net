@@ -1,27 +1,20 @@
 /**
- * 自动同步京东cookie到青龙环境变量
+ * 自动同步 青龙环境变量中的京东cookie 到 boxjs中
  */
 
 const $ = new API('ql', true);
 
 const title = '🐉 通知提示';
-
-const jd_cookies = JSON.parse($.read('#CookiesJD') || '[]');
-
-let remark = {};
+const cookiesKey = '#CookiesJD';
+let jd_reamrk = $.read('#jd_ck_remark');
+let jd_cookies = [];
 try {
-    const _remark = JSON.parse(
-        JSON.parse($.read('#jd_ck_remark') || '{}').remark || '[]'
-    );
-
-    _remark.forEach((item) => {
-        remark[item.username] = item;
-    });
+    jd_cookies = JSON.parse($.read(cookiesKey) || '[]');
+    jd_reamrk = JSON.parse(jd_reamrk || '[]');
 } catch (e) {
     console.log(e);
 }
 
-// 获取cookie字符串中的pin=
 function getUsername(ck) {
     if (!ck) return '';
     return decodeURIComponent(ck.match(/pin=(.+?);/)[1]);
@@ -39,72 +32,59 @@ async function getScriptUrl() {
     const ql_script = (await getScriptUrl()) || '';
     eval(ql_script);
     await $.ql.login();
-
-    // 查看当前青龙环境中的 默认 JD_COOKIE
     const cookiesRes = await $.ql.select();
-    const ids = cookiesRes.data.map((item) => item.id);
-    await $.ql.delete(ids);
     const wskeyRes = await $.ql.select('JD_WSCK');
-    await $.ql.delete(wskeyRes.data.map((item) => item.id));
-    $.log('清空 JD_COOKIE. JD_WSCK');
 
-    const addData = [];
-    const wsCookie = [];
+    const JD_CACHE_INFO = await $.ql.select('JD_CACHE_INFO');
 
-    // 读取当前圈x中保存的cookies
-    for (const jd_cookie of jd_cookies) {
-        const username = getUsername(jd_cookie.cookie);
-        let remarks = '';
-        if (remark[username]) {
-            remarks = remark[username].nickname;
+    const wskey = {};
+    wskeyRes.data.forEach((item) => {
+        const pin = getUsername(item.value);
+        wskey[pin] = item.value;
+    });
 
-            remarks += `&${remark[username].remark}`;
-            if (remark[username].qywxUserId)
-                remarks += `&${remark[username].qywxUserId}`;
-        } else {
-            remarks = username;
+    const cookies = cookiesRes.data.map((item) => {
+        const key = getUsername(item.value);
+        return { userName: key, cookie: item.value };
+    });
+    const saveCookie = jd_cookies.map((item) => {
+        const qlCk = cookies.find((ql) => ql.userName === item.userName);
+        let temp = { ...item };
+        if (qlCk) {
+            temp = { ...temp, ...qlCk };
+            if (wskey[item.userName]) temp.wskey = wskey[item.userName];
         }
-        addData.push({ name: 'JD_COOKIE', value: jd_cookie.cookie, remarks });
+        return temp;
+    });
+    const userNames = saveCookie.map((item) => item.userName);
+    cookies.forEach((ql) => {
+        if (userNames.indexOf(ql.userName) === -1) saveCookie.push(ql);
+    });
 
-        //圈x中有wskey就一起同步到青龙
-        if (jd_cookie.wskey) {
-            wsCookie.push({
-                name: 'JD_WSCK',
-                remarks: remarks.split('&')[0],
-                value:
-                    jd_cookie.wskey.indexOf('pt_pin') !== -1
-                        ? jd_cookie.wskey
-                        : `${jd_cookie.wskey}pt_pin=${encodeURI(username)};`,
+    if (JD_CACHE_INFO.data.length) {
+        const cache_info = JSON.parse(JD_CACHE_INFO.data[0].value);
+        jd_reamrk.remark = JSON.parse(jd_reamrk.remark || '[]');
+
+        if (jd_reamrk.remark.length) {
+            jd_reamrk.remark = jd_reamrk.remark.map((item, index) => {
+                if (cache_info[item.username]) {
+                    return { ...item, ...cache_info[item.username], index };
+                }
+                return item;
             });
+            jd_reamrk.remark = JSON.stringify(jd_reamrk.remark, null, `\t`);
+            $.write(JSON.stringify(jd_reamrk), `#jd_ck_remark`);
         }
-    }
-    // 请求青龙服务 添加环境变量
-    if (addData.length) await $.ql.add(addData);
-    if (wsCookie.length) await $.ql.add(wsCookie);
 
-    const _cookiesRes = await $.ql.select();
-    const _ids = [];
-    // 检查添加后的cookie 是否有效，能否访问京东
-    for (let index = 0; index < _cookiesRes.data.length; index++) {
-        const item = _cookiesRes.data[index];
-        const response = await TotalBean(item.value);
-        if (response.retcode !== '0') _ids.push(item);
     }
 
-    // 禁用过期账号对应的cookie
-    if (_ids.length > 0) {
-        const ids = _ids.map((item) => item.id);
-        console.log(
-            `过期账号：${_ids
-                .map((item) => item.remarks || getUsername(item.value))
-                .join(`\n`)}`
-        );
-        await $.ql.disabled(ids);
-    }
-
-    const cookieText = jd_cookies.map((item) => item.userName).join(`\n`);
+    $.write(JSON.stringify(saveCookie, null, `\t`), cookiesKey);
     if ($.read('mute') !== 'true') {
-        return $.notify(title, '', `🐉 已同步账号： ${cookieText}`);
+        return $.notify(
+            title,
+            '已同步账号',
+            `${cookies.map((item) => item.userName).join(`\n`)}`
+        );
     }
 })()
     .catch((e) => {
@@ -113,24 +93,6 @@ async function getScriptUrl() {
     .finally(() => {
         $.done();
     });
-
-async function TotalBean(Cookie) {
-    const opt = {
-        url: 'https://me-api.jd.com/user_new/info/GetJDUserInfoUnion?sceneval=2&sceneval=2&g_login_type=1&g_ty=ls',
-        headers: {
-            cookie: Cookie,
-            Referer: 'https://home.m.jd.com/',
-        },
-    };
-    return $.http.get(opt).then((response) => {
-        try {
-            return JSON.parse(response.body);
-        } catch (e) {
-            return {};
-        }
-    });
-}
-
 
 // prettier-ignore
 /*********************************** API *************************************/

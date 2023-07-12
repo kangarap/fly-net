@@ -1,136 +1,58 @@
 /**
- * 自动同步京东cookie到青龙环境变量
+ * 青龙 恢复 环境变量
  */
-
 const $ = new API('ql', true);
 
 const title = '🐉 通知提示';
 
-const jd_cookies = JSON.parse($.read('#CookiesJD') || '[]');
-
-let remark = {};
+let envs = [];
 try {
-    const _remark = JSON.parse(
-        JSON.parse($.read('#jd_ck_remark') || '{}').remark || '[]'
-    );
-
-    _remark.forEach((item) => {
-        remark[item.username] = item;
-    });
+  envs = JSON.parse($.read('env') || '[]');
 } catch (e) {
-    console.log(e);
-}
-
-// 获取cookie字符串中的pin=
-function getUsername(ck) {
-    if (!ck) return '';
-    return decodeURIComponent(ck.match(/pin=(.+?);/)[1]);
+  console.log(e);
 }
 
 // 获取远程脚本
 async function getScriptUrl() {
-    const response = await $.http.get({
-        url: 'https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_api.js',
-    });
-    return response.body;
+  const response = await $.http.get({
+    url: 'https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_api.js',
+  });
+  return response.body;
 }
+
 
 (async () => {
-    const ql_script = (await getScriptUrl()) || '';
-    eval(ql_script);
-    await $.ql.login();
+  if (!envs.length) return $.notify(title, '同步失败', '环境变量错误');
 
-    // 查看当前青龙环境中的 默认 JD_COOKIE
-    const cookiesRes = await $.ql.select();
-    const ids = cookiesRes.data.map((item) => item.id);
-    await $.ql.delete(ids);
-    const wskeyRes = await $.ql.select('JD_WSCK');
-    await $.ql.delete(wskeyRes.data.map((item) => item.id));
-    $.log('清空 JD_COOKIE. JD_WSCK');
+  const ql_script = (await getScriptUrl()) || '';
+  eval(ql_script);
+  await $.ql.login();
 
-    const addData = [];
-    const wsCookie = [];
+  const response = await $.ql.select('');
+  const delIds = response.data.map((item) => item.id);
+  await $.ql.delete(delIds);
+  $.log(`=======================清空环境变量=======================`);
 
-    // 读取当前圈x中保存的cookies
-    for (const jd_cookie of jd_cookies) {
-        const username = getUsername(jd_cookie.cookie);
-        let remarks = '';
-        if (remark[username]) {
-            remarks = remark[username].nickname;
-
-            remarks += `&${remark[username].remark}`;
-            if (remark[username].qywxUserId)
-                remarks += `&${remark[username].qywxUserId}`;
-        } else {
-            remarks = username;
-        }
-        addData.push({ name: 'JD_COOKIE', value: jd_cookie.cookie, remarks });
-
-        //圈x中有wskey就一起同步到青龙
-        if (jd_cookie.wskey) {
-            wsCookie.push({
-                name: 'JD_WSCK',
-                remarks: remarks.split('&')[0],
-                value:
-                    jd_cookie.wskey.indexOf('pt_pin') !== -1
-                        ? jd_cookie.wskey
-                        : `${jd_cookie.wskey}pt_pin=${encodeURI(username)};`,
-            });
-        }
-    }
-    // 请求青龙服务 添加环境变量
-    if (addData.length) await $.ql.add(addData);
-    if (wsCookie.length) await $.ql.add(wsCookie);
-
-    const _cookiesRes = await $.ql.select();
-    const _ids = [];
-    // 检查添加后的cookie 是否有效，能否访问京东
-    for (let index = 0; index < _cookiesRes.data.length; index++) {
-        const item = _cookiesRes.data[index];
-        const response = await TotalBean(item.value);
-        if (response.retcode !== '0') _ids.push(item);
-    }
-
-    // 禁用过期账号对应的cookie
-    if (_ids.length > 0) {
-        const ids = _ids.map((item) => item.id);
-        console.log(
-            `过期账号：${_ids
-                .map((item) => item.remarks || getUsername(item.value))
-                .join(`\n`)}`
-        );
-        await $.ql.disabled(ids);
-    }
-
-    const cookieText = jd_cookies.map((item) => item.userName).join(`\n`);
-    if ($.read('mute') !== 'true') {
-        return $.notify(title, '', `🐉 已同步账号： ${cookieText}`);
-    }
+  await $.ql.add(
+    envs
+      .filter((item) => item.status === 0)
+      .map((env) => ({
+        name: `${env.name}`,
+        value: `${env.value}`,
+        remarks: `${env.remarks || ''}`,
+      }))
+  );
+  $.log(`=======================恢复环境变量=======================`);
+  if ($.read('mute') !== 'true') {
+    return $.notify(title, '同步成功', `同步个数：${envs.length} 个`);
+  }
 })()
-    .catch((e) => {
-        $.log(JSON.stringify(e));
-    })
-    .finally(() => {
-        $.done();
-    });
-
-async function TotalBean(Cookie) {
-    const opt = {
-        url: 'https://me-api.jd.com/user_new/info/GetJDUserInfoUnion?sceneval=2&sceneval=2&g_login_type=1&g_ty=ls',
-        headers: {
-            cookie: Cookie,
-            Referer: 'https://home.m.jd.com/',
-        },
-    };
-    return $.http.get(opt).then((response) => {
-        try {
-            return JSON.parse(response.body);
-        } catch (e) {
-            return {};
-        }
-    });
-}
-
+  .catch((e) => {
+    $.log(JSON.stringify(e));
+  })
+  .finally(() => {
+    $.done();
+  });
 
 // prettier-ignore
 /*********************************** API *************************************/
