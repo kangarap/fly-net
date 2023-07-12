@@ -93,11 +93,11 @@
         },
         {
           "name": "BoxJS同步到青龙【饿了么CK】(待实现)",
-          "script": ""
+          "script": "https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_jd_cookie_sync.js"
         },
         {
           "name": "BoxJS同步到青龙【美团CK】(待实现)",
-          "script": ""
+          "script": "https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_jd_cookie_sync.js"
         },
         {
           "name": "备份环境变量",
