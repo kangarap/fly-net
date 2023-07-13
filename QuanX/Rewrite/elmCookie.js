@@ -12,13 +12,36 @@ const $ = new API('elm', true);
 
     if (req.method != 'OPTIONS' && req.headers) {
         const CV = (req.headers['Cookie'] || req.headers['cookie'] || '');
-        const ckItems = CV.match(/(SID|cookie2)=.+?;/g);
-        if (ckItems && ckItems.length == 2) {
+        const ckItems = CV.match(/(SID|cookie2|USERID)=.+?;/g);
+        if (ckItems && ckItems.length == 3) {
             // cookie 字符串
             let str = ckItems.join(' ');
-            $.write(str, "elmCookie")
-            console.log(`写入cookie：${str}`)
-            $.notify('elmCookie', ``, `写入cookie：${str}`)
+            let newCk = getUsername(str);
+            let isUpdate = false;
+
+            // 读取已有字符串
+            const elmCookie = JSON.parse($.read('elmCookie') || '[]');
+
+            for (let i = 0; i < elmCookie.length; i++) {
+                const ck = elmCookie[i];
+
+                if (new RegExp(`USERID=${newCk};`).test(ck.cookie)) {
+                    // 在这里进行需要的更新操作，例如更新cookie值
+                    isUpdate = true;
+                    elmCookie[i].cookie = str ;
+                    break;
+                }
+            }
+
+            if(!isUpdate) {
+                elmCookie.push({cookie: str})
+            }
+
+            //获取之前的cookie数组
+            //找到userid相同的就更新， 不同的就加进去
+            $.write(elmCookie, "elmCookie")
+            console.log(`写入cookie：${elmCookie}`)
+            $.notify('饿了么获取cookie', ``, `写入cookie：${elmCookie}`)
         } else {
             throw new Error("写入Cookie失败, 关键值缺失\n可能原因: 非网页获取 ‼️");
         }
@@ -30,6 +53,11 @@ const $ = new API('elm', true);
 
 })
 
+
+function getUsername(ck) {
+    if (!ck) return '';
+    return decodeURIComponent(ck.match(/USERID=(.+?);/)[1]);
+}
 
 // prettier-ignore
 /*********************************** API *************************************/
