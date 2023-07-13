@@ -1,69 +1,60 @@
 /**
- * 将本地的饿了么cookie 同步到青龙环境变量中
+ * 获取 meituan cookie
+ *
+ * [rewrite_local]
+ * ^https:\/\/lx0\.meituan\.com\/ url script-request-header https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Rewrite/meituanCookie.js
  */
 
-const $ = new API('elm', true);
+const $ = new API('meituan', true);
 
-const title = '😋 饿了么通知提示';
+!(async () => {
+    const req = $request;
 
-const data = $.read('elmCookie');
-$.log(`获取到cookie: ${data}`)
-const elmCookie = JSON.parse(data || '[]');
+    if (req.method != 'OPTIONS' && req.headers) {
+        const CV = (req.headers['Cookie'] || req.headers['cookie'] || '');
+        const ckItems = CV.match(/(token|uuid)=.+?;/g);
+        if (ckItems && ckItems.length == 2) {
+            // cookie 字符串
+            let str = ckItems.join(' ').replace(/\s/g, '');
+            let newCk = getUsername(str);
+            let isUpdate = false;
+
+            // 读取已有字符串
+            const meituanCookie = JSON.parse($.read('meituanCookie') || '[]');
+
+            for (let i = 0; i < meituanCookie.length; i++) {
+                const ck = meituanCookie[i];
+
+                if (new RegExp(`uuid=${newCk};`).test(ck.cookie)) {
+                    isUpdate = true;
+                    meituanCookie[i].cookie = str ;
+                    break;
+                }
+            }
+
+            if(!isUpdate) {
+                meituanCookie.push({cookie: str})
+            }
+
+            $.write(JSON.stringify(meituanCookie), "meituanCookie")
+            console.log(`写入cookie：${meituanCookie}`)
+            $.notify('美团获取cookie', ``, `写入cookie：${meituanCookie}`)
+        } else {
+            throw new Error("写入Cookie失败, 关键值缺失\n可能原因: 非网页获取 ‼️");
+        }
+    } else if (!req.headers) {
+        throw new Error("写入Cookie失败, 请检查匹配URL或配置内脚本类型 ⚠️");
+    }
+})().catch((err) => {
+    $.notify("饿了么获取cookie", "❌ 解析数据出现错误", err.message);
+
+})
+
 
 function getUsername(ck) {
     if (!ck) return '';
-    return decodeURIComponent(ck.match(/USERID=(.+?);/)[1]);
+    return decodeURIComponent(ck.match(/uuid=(.+?);/)[1]);
 }
-
-// 获取远程脚本
-async function getScriptUrl() {
-    const response = await $.http.get({
-        url: 'https://raw.githubusercontent.com/kangarap/fly-net/main/QuanX/Task/ql_api.js',
-    });
-    return response.body;
-}
-
-(async () => {
-    const ql_script = (await getScriptUrl()) || '';
-    eval(ql_script);
-    await $.ql.login();
-
-    // 查看当前青龙环境中的 默认 JD_COOKIE
-    const cookiesRes = await $.ql.select('elmCookie');
-    const ids = cookiesRes.data.map((item) => item.id);
-    await $.ql.delete(ids);
-
-    $.log('清空 elmCookie.');
-
-    let cookie = "";
-    let remarks = "";
-
-    for(let ck of elmCookie) {
-
-        remarks = getUsername(ck.cookie) + "&" ;
-        cookie = cookie +`${ck.cookie}` + "&" ;
-    }
-
-    const addData = [
-        {
-            name: 'elmCookie',
-            value: cookie.replace(/.$/, ""),
-            remarks: remarks.replace(/.$/, ""),
-        }
-    ];
-    // 请求青龙服务 添加环境变量
-    await $.ql.add(addData);
-
-    if ($.read('mute') !== 'true') {
-        return $.notify(title, title, `🐉 已同步Cookie： ${elmCookie}`);
-    }
-})()
-    .catch((e) => {
-        $.log(JSON.stringify(e));
-    })
-    .finally(() => {
-        $.done();
-    });
 
 // prettier-ignore
 /*********************************** API *************************************/

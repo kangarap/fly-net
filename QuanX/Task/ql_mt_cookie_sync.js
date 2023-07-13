@@ -1,18 +1,18 @@
 /**
- * 将本地的饿了么cookie 同步到青龙环境变量中
+ * 将本地的美团cookie 同步到青龙环境变量中
  */
 
-const $ = new API('elm', true);
+const $ = new API('meituan', true);
 
-const title = '😋 饿了么通知提示';
+const title = '😋 美团通知提示';
 
-const data = $.read('elmCookie');
+const data = $.read('meituanCookie');
 $.log(`获取到cookie: ${data}`)
-const elmCookie = JSON.parse(data || '[]');
+const meituanCookie = JSON.parse(data || '[]');
 
 function getUsername(ck) {
     if (!ck) return '';
-    return decodeURIComponent(ck.match(/USERID=(.+?);/)[1]);
+    return decodeURIComponent(ck.match(/uuid=(.+?);/)[1]);
 }
 
 // 获取远程脚本
@@ -29,16 +29,16 @@ async function getScriptUrl() {
     await $.ql.login();
 
     // 查看当前青龙环境中的 默认 JD_COOKIE
-    const cookiesRes = await $.ql.select('elmCookie');
+    const cookiesRes = await $.ql.select('meituanCookie');
     const ids = cookiesRes.data.map((item) => item.id);
     await $.ql.delete(ids);
 
-    $.log('清空 elmCookie.');
+    $.log('清空 meituanCookie.');
 
     let cookie = "";
     let remarks = "";
 
-    for(let ck of elmCookie) {
+    for(let ck of meituanCookie) {
 
         remarks = getUsername(ck.cookie) + "&" ;
         cookie = cookie +`${ck.cookie}` + "&" ;
@@ -46,7 +46,7 @@ async function getScriptUrl() {
 
     const addData = [
         {
-            name: 'elmCookie',
+            name: 'meituanCookie',
             value: cookie.replace(/.$/, ""),
             remarks: remarks.replace(/.$/, ""),
         }
@@ -55,7 +55,7 @@ async function getScriptUrl() {
     await $.ql.add(addData);
 
     if ($.read('mute') !== 'true') {
-        return $.notify(title, title, `🐉 已同步Cookie： ${elmCookie}`);
+        return $.notify(title, title, `🐉 已同步Cookie： ${meituanCookie}`);
     }
 })()
     .catch((e) => {

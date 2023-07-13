@@ -36,8 +36,6 @@ const $ = new API('elm', true);
                 elmCookie.push({cookie: str})
             }
 
-            //获取之前的cookie数组
-            //找到userid相同的就更新， 不同的就加进去
             $.write(JSON.stringify(elmCookie), "elmCookie")
             console.log(`写入cookie：${elmCookie}`)
             $.notify('饿了么获取cookie', ``, `写入cookie：${elmCookie}`)
