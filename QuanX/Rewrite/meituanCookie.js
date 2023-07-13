@@ -13,6 +13,7 @@ const $ = new API('meituan', true);
     if (req.method != 'OPTIONS' && req.headers) {
         const CV = (req.headers['Cookie'] || req.headers['cookie'] || '');
         const ckItems = CV.match(/(token|uuid)=.+?;/g);
+        $.log("meituanCookie =>>>", ckItems);
         if (ckItems && ckItems.length == 2) {
             // cookie 字符串
             let str = ckItems.join(' ').replace(/\s/g, '');
@@ -46,7 +47,7 @@ const $ = new API('meituan', true);
         throw new Error("写入Cookie失败, 请检查匹配URL或配置内脚本类型 ⚠️");
     }
 })().catch((err) => {
-    $.notify("饿了么获取cookie", "❌ 解析数据出现错误", err.message);
+    $.notify("美团获取cookie", "❌ 解析数据出现错误", err.message);
 
 })
 
