@@ -15,7 +15,7 @@ const $ = new API('elm', true);
         const ckItems = CV.match(/(SID|cookie2|USERID)=.+?;/g);
         if (ckItems && ckItems.length == 3) {
             // cookie 字符串
-            let str = ckItems.join(' ');
+            let str = ckItems.join(' ').replace(/\s/g, '');
             let newCk = getUsername(str);
             let isUpdate = false;
 
@@ -26,7 +26,6 @@ const $ = new API('elm', true);
                 const ck = elmCookie[i];
 
                 if (new RegExp(`USERID=${newCk};`).test(ck.cookie)) {
-                    // 在这里进行需要的更新操作，例如更新cookie值
                     isUpdate = true;
                     elmCookie[i].cookie = str ;
                     break;
