@@ -13,7 +13,7 @@ const $ = new API('meituan', true);
     if (req.method != 'OPTIONS' && req.headers) {
         const CV = (req.headers['Cookie'] || req.headers['cookie'] || '');
         const ckItems = CV.match(/(token|uuid)=.+?;/g);
-        $.log("meituanCookie =>>>", ckItems);
+        $.log("meituanCookie =>>>", CV, ckItems);
         if (ckItems && ckItems.length == 2) {
             // cookie 字符串
             let str = ckItems.join(' ').replace(/\s/g, '');
