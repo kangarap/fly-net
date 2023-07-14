@@ -40,8 +40,8 @@ async function getScriptUrl() {
 
     for(let ck of elmCookie) {
 
-        remarks = getUsername(ck.cookie) + "&" ;
-        cookie = cookie +`${ck.cookie}` + "&" ;
+        remark += getUsername(ck.cookie) + "&" ;
+        cookie += `${ck.cookie}` + "&" ;
     }
 
     const addData = [
