@@ -15,6 +15,11 @@ function getUsername(ck) {
     return decodeURIComponent(ck.match(/uuid=(.+?);/)[1]);
 }
 
+function getToken(ck) {
+    if (!ck) return '';
+    return decodeURIComponent(ck.match(/token=(.+?);/)[1]);
+}
+
 // 获取远程脚本
 async function getScriptUrl() {
     const response = await $.http.get({
@@ -40,8 +45,8 @@ async function getScriptUrl() {
 
     for(let ck of meituanCookie) {
 
-        remarks = getUsername(ck.cookie) + "&" ;
-        cookie = cookie +`${ck.cookie}` + "&" ;
+        remarks += getUsername(ck.cookie) + "&" ;
+        cookie += getToken(ck.cookie) + "&" ;
     }
 
     const addData = [
