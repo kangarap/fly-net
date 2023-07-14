@@ -7,14 +7,27 @@
 
 const $ = new API('meituan', true);
 
-!(async () => {
+(async () => {
     const req = $request;
 
     if (req.method != 'OPTIONS' && req.headers) {
-        const CV = (req.headers['Cookie'] || req.headers['cookie'] || '');
-        const ckItems = CV.match(/(token|uuid)=.+?;/g);
-        $.log("meituanCookie =>>>", CV, ckItems);
-        if (ckItems && ckItems.length == 2) {
+        
+        let ckItems = [];
+        
+        for (let key in req.headers) {
+            
+          if (key === 'cookie' || key === 'Cookie') {
+            const CV = req.headers[key];
+            $.log("CV ===> " + CV);
+            ckItems = CV.match(/[^_.\w+](token|uuid)=.+?;/g);
+              
+            break;
+          }
+        }
+        
+        $.log("ckItems size =====>  " + ckItems.length + " , item =====> " + ckItems)
+      
+        if (ckItems.length == 2) {
             // cookie 字符串
             let str = ckItems.join(' ').replace(/\s/g, '');
             let newCk = getUsername(str);
